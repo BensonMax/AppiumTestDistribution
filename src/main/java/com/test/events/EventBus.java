@@ -9,7 +9,7 @@ import java.util.concurrent.TimeoutException;
 
 public class EventBus {
 
-    private static final String QUEUE_NAME = "ABCD";
+    private static final String QUEUE_NAME = "device";
     private static EventBus instance;
     private Channel channel = null;
 
@@ -21,16 +21,14 @@ public class EventBus {
             connection = factory.newConnection();
             channel = connection.createChannel();
             channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
+        } catch (IOException | TimeoutException e) {
             e.printStackTrace();
         }
     }
 
-    public void publish(String data) {
+    public void publish(Object data) {
         try {
-            channel.basicPublish("", QUEUE_NAME, null, data.getBytes());
+            channel.basicPublish("", QUEUE_NAME, null, data.toString().getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -42,5 +40,4 @@ public class EventBus {
         }
         return instance;
     }
-
 }
