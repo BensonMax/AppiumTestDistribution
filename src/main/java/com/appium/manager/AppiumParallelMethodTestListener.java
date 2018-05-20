@@ -4,6 +4,7 @@ import com.annotation.values.Description;
 import com.annotation.values.SkipIf;
 import com.appium.utils.Retry;
 import com.aventstack.extentreports.Status;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.report.factory.ExtentManager;
 import com.report.factory.ExtentTestManager;
 import org.testng.IInvokedMethod;
@@ -87,7 +88,11 @@ public final class AppiumParallelMethodTestListener
             e.printStackTrace();
         } finally {
             ExtentManager.getExtent().flush();
-            deviceAllocationManager.freeDevice();
+            try {
+                deviceAllocationManager.freeDevice();
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
             try {
                 appiumDriverManager.stopAppiumDriver();
             } catch (Exception e) {

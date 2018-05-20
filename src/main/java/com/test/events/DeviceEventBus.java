@@ -7,13 +7,13 @@ import com.rabbitmq.client.ConnectionFactory;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-public class EventBus {
+public class DeviceEventBus {
 
     private static final String QUEUE_NAME = "device";
-    private static EventBus instance;
+    private static DeviceEventBus instance;
     private Channel channel = null;
 
-    public EventBus() {
+    public DeviceEventBus() {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
         Connection connection = null;
@@ -34,9 +34,9 @@ public class EventBus {
         }
     }
 
-    public static EventBus getInstance() {
+    public static DeviceEventBus getInstance() {
         if (instance == null) {
-            instance = new EventBus();
+            instance = new DeviceEventBus();
         }
         return instance;
     }

@@ -4,9 +4,12 @@ import com.appium.utils.AppiumDevice;
 import com.appium.utils.DevicesByHost;
 import com.appium.utils.HostMachineDeviceManager;
 import com.appium.utils.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.yunusmete.stf.api.STFService;
 import com.github.yunusmete.stf.model.DeviceBody;
 import com.github.yunusmete.stf.rest.DeviceResponse;
+import com.test.events.DeviceEventBus;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -31,23 +34,21 @@ public class DeviceAllocationManager {
     private static final Logger LOGGER = Logger.getLogger(Class.class.getName());
     private HostMachineDeviceManager hostMachineDeviceManager;
     private List<AppiumDevice> allDevices;
-    private AppiumDriverManager appiumDriverManager;
 
-    private DeviceAllocationManager() throws Exception {
+    private DeviceAllocationManager() {
         try {
             isPlatformInEnv();
             hostMachineDeviceManager = HostMachineDeviceManager.getInstance();
             ArtifactsUploader.getInstance().initializeArtifacts();
             DevicesByHost appiumDeviceByHost = hostMachineDeviceManager.getDevicesByHost();
             allDevices = appiumDeviceByHost.getAllDevices();
-            appiumDriverManager = new AppiumDriverManager();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
 
-    public static DeviceAllocationManager getInstance() throws Exception {
+    public static DeviceAllocationManager getInstance() {
         if (instance == null) {
             instance = new DeviceAllocationManager();
         }
@@ -62,12 +63,8 @@ public class DeviceAllocationManager {
     }
 
     private void connectToSTF() {
-        try {
-            if (STF_SERVICE_URL != null && ACCESS_TOKEN != null) {
-                connectToSTFServer();
-            }
-        } catch (MalformedURLException | URISyntaxException e) {
-            e.printStackTrace();
+        if (STF_SERVICE_URL != null && ACCESS_TOKEN != null) {
+            connectToSTFServer();
         }
     }
 
@@ -90,19 +87,26 @@ public class DeviceAllocationManager {
         return null;
     }
 
-    public void freeDevice() {
+    public void freeDevice() throws JsonProcessingException {
         AppiumDeviceManager.getAppiumDevice().freeDevice();
-        LOGGER.info("DeAllocated Device " + AppiumDeviceManager.getAppiumDevice().getDevice()
+        DeviceEventBus.getInstance().publish(new ObjectMapper()
+                .writerWithDefaultPrettyPrinter()
+                .writeValueAsString(AppiumDeviceManager.getAppiumDevice()));
+        LOGGER.info("DeAllocated Device "
+                + AppiumDeviceManager.getAppiumDevice().getDevice()
                 .getUdid()
                 + " from execution list");
     }
 
-    public void allocateDevice(AppiumDevice appiumDevice) {
+    public void allocateDevice(AppiumDevice appiumDevice) throws JsonProcessingException {
         LOGGER.info("Allocated Device " + appiumDevice + " for Execution");
         AppiumDeviceManager.setDevice(appiumDevice);
+        DeviceEventBus.getInstance().publish(new ObjectMapper()
+                .writerWithDefaultPrettyPrinter()
+                .writeValueAsString(AppiumDeviceManager.getAppiumDevice()));
     }
 
-    private void connectToSTFServer() throws MalformedURLException, URISyntaxException {
+    private void connectToSTFServer() {
         DeviceResponse devices = service.getDevices();
         List<com.github.yunusmete.stf.model.Device> deviceList = devices.getDevices();
         for (com.github.yunusmete.stf.model.Device device : deviceList) {

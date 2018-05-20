@@ -6,6 +6,7 @@ import com.appium.utils.AppiumDevice;
 import com.appium.utils.DevicesByHost;
 import com.appium.utils.HostMachineDeviceManager;
 import com.aventstack.extentreports.Status;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.report.factory.ExtentManager;
 
 import org.json.JSONObject;
@@ -207,8 +208,8 @@ public final class AppiumParallelTestListener
             DevicesByHost devicesByHost = HostMachineDeviceManager.getInstance().getDevicesByHost();
             AppiumDevice appiumDevice = devicesByHost.getAppiumDevice(device, hostName);
             String className = testClass.getRealClass().getSimpleName();
+            appiumDevice.blockDevice();
             deviceAllocationManager.allocateDevice(appiumDevice);
-
             if (getClass().getAnnotation(Description.class) != null) {
                 testDescription = getClass().getAnnotation(Description.class).value();
             }
@@ -222,7 +223,11 @@ public final class AppiumParallelTestListener
     @Override
     public void onAfterClass(ITestClass iTestClass) {
         ExtentManager.getExtent().flush();
-        deviceAllocationManager.freeDevice();
+        try {
+            deviceAllocationManager.freeDevice();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
